@@ -1,17 +1,7 @@
-# Виртуальное окружение
 venv/
-
-# Кэш Python
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
-
-# Секреты и конфиги
 .env
 
-# Другие большие файлы
-*.sqlite3
-
-git add .gitignore
-git commit -m "Ignore venv and cache files"
