@@ -12,3 +12,6 @@ __pycache__/
 
 # Другие большие файлы
 *.sqlite3
+
+git add .gitignore
+git commit -m "Ignore venv and cache files"
