@@ -1,31 +1,33 @@
 import os
-import yt_dlp
+import asyncio
+import uuid
 import whisper
+import yt_dlp
 from telegram import Update
-from telegram.ext import ApplicationBuilder, ContextTypes, MessageHandler, filters
+from telegram.ext import ApplicationBuilder, MessageHandler, filters, ContextTypes
 
 # ================== НАСТРОЙКИ ==================
-TOKEN = os.getenv("8377974321:AAG1VqQNq7vWnrQI_HvffSGe1ljyKZn0di0")  # твой Telegram токен
+TOKEN = "8472668826:AAG7miPca8eYkZKWIjng-ChQwnZ94o3n03E"  # твой токен
 DOWNLOAD_DIR = "downloads"
 
-# Создаем папку для скачивания
+# Создаем папку downloads
 os.makedirs(DOWNLOAD_DIR, exist_ok=True)
 
-# Загружаем модель Whisper (работаем на CPU)
-model = whisper.load_model("small")
-print("🤖 Whisper модель загружена, бот готов к работе!")
+# Загружаем модель Whisper (CPU)
+model = whisper.load_model("tiny")  # можно tiny, small, medium, large
 
-# ================== ОБРАБОТКА СООБЩЕНИЙ ==================
+# ================== ФУНКЦИЯ ОБРАБОТКИ СООБЩЕНИЙ ==================
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     link = update.message.text.strip()
 
     if not link.startswith("http"):
-        await update.message.reply_text("❌ Похоже, это не ссылка")
+        await update.message.reply_text("❌ Это не ссылка")
         return
 
     await update.message.reply_text("⏳ Скачиваю аудио...")
 
-    audio_base = os.path.join(DOWNLOAD_DIR, str(update.effective_user.id))
+    # Имя файла уникальное для каждого пользователя
+    audio_base = os.path.join(DOWNLOAD_DIR, str(update.effective_user.id) + "_" + str(uuid.uuid4()))
     audio_path = audio_base + ".mp3"
 
     ydl_opts = {
@@ -37,12 +39,10 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "key": "FFmpegExtractAudio",
             "preferredcodec": "mp3",
             "preferredquality": "192",
-        }],
-        "headers": {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
-        }
+        }]
     }
 
+    # Скачивание
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             ydl.download([link])
@@ -51,20 +51,22 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     if not os.path.exists(audio_path):
-        await update.message.reply_text("❌ Аудио не найдено")
+        await update.message.reply_text("❌ Аудио не найдено после скачивания")
         return
 
-    await update.message.reply_text("🎧 Расшифровываю аудио...")
+    await update.message.reply_text("🎧 Расшифровываю...")
 
+    # ===== Транскрипция =====
     try:
-        result = model.transcribe(audio_path, language="ru", task="transcribe")
+        result = model.transcribe(audio_path, language="ru", task="transcribe", fp16=False)
         text = result["text"].strip()
     except Exception as e:
-        await update.message.reply_text(f"❌ Ошибка Whisper:\n{e}")
+        await update.message.reply_text(f"❌ Ошибка транскрипции:\n{e}")
+        os.remove(audio_path)
         return
 
-    # Отправка результата пользователю
-    if len(text) > 4000:
+    # ===== Отправка результата =====
+    if len(text) > 4000:  # если текст длинный — файл
         txt_path = os.path.join(DOWNLOAD_DIR, f"text_{update.effective_user.id}.txt")
         with open(txt_path, "w", encoding="utf-8") as f:
             f.write(text)
@@ -73,13 +75,13 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         await update.message.reply_text(text)
 
-    # Удаляем аудио после обработки
+    # ===== Чистка мусора =====
     os.remove(audio_path)
 
-# ================== ЗАПУСК БОТА ==================
-if name == "__main__":
+# ================== ЗАПУСК ==================
+if __name__ == "__main__":
     app = ApplicationBuilder().token(TOKEN).build()
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
-    print("🤖 Бот запущен! Ожидаю ссылки на видео или аудио...")
+    print("🤖 Бот запущен")
     app.run_polling()
     
