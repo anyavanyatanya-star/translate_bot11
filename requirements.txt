@@ -1,5 +1,5 @@
-python-telegram-bot==20.7
-yt-dlp
-openai-whisper
-torch
-ffmpeg-python
+python-telegram-bot==20.5
+yt-dlp==2026.1.16
+whisper==20230314
+torch==2.2.0
+ffmpeg-python==0.2.0
