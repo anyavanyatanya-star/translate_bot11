@@ -1,5 +1,6 @@
 python-telegram-bot==20.5
-yt-dlp==2026.1.16
-whisper==20230314
-torch==2.2.0
+yt-dlp==2023.12.1
+openai==0.27.8
+whisper @ git+https://github.com/openai/whisper.git
+torch==2.2.0+cpu --index-url https://download.pytorch.org/whl/cpu
 ffmpeg-python==0.2.0
