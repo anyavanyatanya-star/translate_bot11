@@ -82,3 +82,4 @@ if name == "__main__":
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     print("🤖 Бот запущен! Ожидаю ссылки на видео или аудио...")
     app.run_polling()
+    
