@@ -1,4 +1,4 @@
 python-telegram-bot==20.5
-yt-dlp==2026.1.16
+yt-dlp>=2023.12.2
 whisper==20230314
 torch==2.1.0
