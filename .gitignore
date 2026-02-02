@@ -1,7 +1,4 @@
-venv/
-.venv/
-__pycache__/
 downloads/
 *.pyc
-.env
+__pycache__/
 
