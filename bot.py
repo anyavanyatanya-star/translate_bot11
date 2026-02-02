@@ -5,21 +5,22 @@ from telegram import Update
 from telegram.ext import ApplicationBuilder, ContextTypes, MessageHandler, filters
 
 # ================== НАСТРОЙКИ ==================
-TOKEN = os.getenv ("8377974321:AAG1VqQNq7vWnrQI_HvffSGe1ljyKZn0di0")
+TOKEN = "8377974321:AAG1VqQNq7vWnrQI_HvffSGe1ljyKZn0di0"  # твой Telegram токен
 DOWNLOAD_DIR = "downloads"
 
-# Создаем папку
+# Создаем папку для скачивания
 os.makedirs(DOWNLOAD_DIR, exist_ok=True)
 
-# Загружаем модель (GPU если есть)
+# Загружаем модель Whisper (работаем на CPU)
 model = whisper.load_model("small")
+print("🤖 Whisper модель загружена, бот готов к работе!")
 
 # ================== ОБРАБОТКА СООБЩЕНИЙ ==================
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     link = update.message.text.strip()
 
     if not link.startswith("http"):
-        await update.message.reply_text("❌ Это не ссылка")
+        await update.message.reply_text("❌ Похоже, это не ссылка")
         return
 
     await update.message.reply_text("⏳ Скачиваю аудио...")
@@ -37,7 +38,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "preferredcodec": "mp3",
             "preferredquality": "192",
         }],
-        "cookies_from_browser": ("chrome",),
         "headers": {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
         }
@@ -54,22 +54,16 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("❌ Аудио не найдено")
         return
 
-    await update.message.reply_text("🎧 Расшифровываю...")
+    await update.message.reply_text("🎧 Расшифровываю аудио...")
 
-    # ===== WHISPER =====
     try:
-        result = model.transcribe(
-            audio_path,
-            language="ru",
-            task="transcribe",
-            fp16=True
-        )
+        result = model.transcribe(audio_path, language="ru", task="transcribe")
         text = result["text"].strip()
     except Exception as e:
         await update.message.reply_text(f"❌ Ошибка Whisper:\n{e}")
         return
 
-    # ===== ОТПРАВКА =====
+    # Отправка результата пользователю
     if len(text) > 4000:
         txt_path = os.path.join(DOWNLOAD_DIR, f"text_{update.effective_user.id}.txt")
         with open(txt_path, "w", encoding="utf-8") as f:
@@ -79,12 +73,12 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         await update.message.reply_text(text)
 
-    # ===== ЧИСТКА МУСОРА =====
+    # Удаляем аудио после обработки
     os.remove(audio_path)
 
-# ================== ЗАПУСК ==================
-if __name__ == "__main__":
+# ================== ЗАПУСК БОТА ==================
+if name == "__main__":
     app = ApplicationBuilder().token(TOKEN).build()
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
-    print("🤖 Бот запущен")
+    print("🤖 Бот запущен! Ожидаю ссылки на видео или аудио...")
     app.run_polling()
