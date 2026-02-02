@@ -5,7 +5,7 @@ from telegram import Update
 from telegram.ext import ApplicationBuilder, ContextTypes, MessageHandler, filters
 
 # ================== НАСТРОЙКИ ==================
-TOKEN = "8377974321:AAG1VqQNq7vWnrQI_HvffSGe1ljyKZn0di0"  # твой Telegram токен
+TOKEN = os.getenv("8377974321:AAG1VqQNq7vWnrQI_HvffSGe1ljyKZn0di0")  # твой Telegram токен
 DOWNLOAD_DIR = "downloads"
 
 # Создаем папку для скачивания
